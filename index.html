@@ -212,7 +212,7 @@
                     showFeedback('error', '❌', `STOP:\n${result.message || 'Already voided or invalid code'}`, true);
                 }
             } catch (error) {
-                showFeedback('error', '⚠️', 'Network Error.\nCheck internet connection.', true);
+                showFeedback('error', '⚠️', 'Error.\n' + error.message, true);
             }
         }
 

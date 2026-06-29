@@ -2,143 +2,244 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Event Booth Scanner</title>
     <!-- Load the HTML5-QRCode Library via CDN -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --error: #dc2626;
+            --bg: #f4f4f9;
+        }
+        
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            -webkit-tap-highlight-color: transparent;
         }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+        /* --- 1. Access Code Wall --- */
+        #access-wall {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
         }
-        select {
-            font-size: 18px;
-            padding: 10px;
-            width: 100%;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+        #access-wall h2 { margin-bottom: 20px; color: #333; }
+        #access-input {
+            font-size: 24px; padding: 15px; width: 100%; max-width: 300px;
+            text-align: center; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 20px;
+            letter-spacing: 5px;
         }
-        #reader {
-            width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
+        #access-btn {
+            font-size: 18px; padding: 15px 40px; background: var(--primary);
+            color: white; border: none; border-radius: 8px; font-weight: bold; width: 100%; max-width: 300px;
         }
-        #feedback {
-            margin-top: 20px;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            display: none; /* Hidden by default */
+
+        /* --- Main App Container --- */
+        #app-container { display: none; padding: 20px; max-width: 500px; margin: 0 auto; text-align: center; }
+        
+        /* --- 2. Booth Grid --- */
+        .booth-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 40px 0;
         }
-        .success { background-color: #d4edda; color: #155724; display: block !important; }
-        .error { background-color: #f8d7da; color: #721c24; display: block !important; }
-        .processing { background-color: #fff3cd; color: #856404; display: block !important; }
+        .booth-btn {
+            padding: 20px 10px; font-size: 16px; font-weight: bold; background: white;
+            border: 2px solid #e5e7eb; border-radius: 12px; color: #4b5563; transition: all 0.2s;
+        }
+        .booth-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        /* --- Main Scan Button --- */
+        #open-scanner-btn {
+            background: #111; color: white; border: none; padding: 20px; font-size: 20px;
+            border-radius: 12px; width: 100%; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- 3. Scanner Modal --- */
+        #scanner-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #reader-container { width: 100%; max-width: 500px; background: black; }
+        #reader { width: 100%; }
+        #close-modal-btn {
+            margin-top: 30px; padding: 15px 40px; font-size: 18px; background: transparent;
+            color: white; border: 2px solid white; border-radius: 8px;
+        }
+
+        /* --- 4. Fullscreen Feedback Message --- */
+        #feedback-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; color: white; cursor: pointer;
+        }
+        #feedback-icon { font-size: 80px; margin-bottom: 20px; }
+        #feedback-text { font-size: 24px; font-weight: bold; line-height: 1.4; margin-bottom: 30px; }
+        .tap-instruction { font-size: 16px; opacity: 0.8; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 20px; }
+
+        .bg-processing { background-color: #f59e0b; }
+        .bg-success { background-color: var(--success); }
+        .bg-error { background-color: var(--error); }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Booth Scanner</h2>
+    <!-- 1. Access Code Wall -->
+    <div id="access-wall">
+        <h2>Enter Access Code</h2>
+        <!-- Default password is set to 8888 in the JS below -->
+        <input type="password" id="access-input" inputmode="numeric" placeholder="••••">
+        <button id="access-btn" onclick="checkAccess()">Enter Scanner</button>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app-container">
+        <h2>Select Your Booth</h2>
         
-        <!-- Booth Selection Dropdown -->
-        <select id="booth-select">
-            <option value="Booth A">Booth A</option>
-            <option value="Booth B">Booth B</option>
-            <option value="Booth C">Booth C</option>
-        </select>
+        <!-- 2. Grid Buttons -->
+        <div class="booth-grid">
+            <button class="booth-btn" onclick="selectBooth(this, 'Booth A')">Booth A</button>
+            <button class="booth-btn" onclick="selectBooth(this, 'Booth B')">Booth B</button>
+            <button class="booth-btn" onclick="selectBooth(this, 'Booth C')">Booth C</button>
+        </div>
 
-        <!-- Camera Container -->
-        <div id="reader"></div>
+        <button id="open-scanner-btn" onclick="openScanner()">📸 Tap to Scan QR</button>
+    </div>
 
-        <!-- Feedback Message Area -->
-        <div id="feedback">Ready to scan</div>
+    <!-- 3. Scanner Modal -->
+    <div id="scanner-modal">
+        <div id="reader-container">
+            <div id="reader"></div>
+        </div>
+        <button id="close-modal-btn" onclick="closeScanner()">Cancel</button>
+    </div>
+
+    <!-- 4. Tap-to-Dismiss Feedback -->
+    <div id="feedback-overlay" onclick="dismissFeedback()">
+        <div id="feedback-icon">⏳</div>
+        <div id="feedback-text">Verifying...</div>
+        <div class="tap-instruction" id="tap-to-close" style="display:none;">Tap anywhere to close</div>
     </div>
 
     <script>
-        // 1. IMPORTANT: Replace this with your Make.com or Zapier Webhook URL
-        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyciGHsj4VcWzAu3lFcJP_4Jhg7vdDP6U_yztAT7_MW_TEjryJOwMq8TDTq2Oq2P6Ykew/exec";
+        // --- CONFIGURATION ---
+        const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/9893707/42g92qz/";
+        const ACCESS_CODE = "8888"; // Change your password here
         
-        let isProcessing = false; // Prevents double-scanning the same code instantly
-        const feedbackEl = document.getElementById('feedback');
+        let selectedBooth = null;
+        let html5QrCode = null;
 
-        // Initialize the QR Scanner
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            /* verbose= */ false
-        );
+        // --- 1. Access Logic ---
+        function checkAccess() {
+            const input = document.getElementById('access-input').value;
+            if(input === ACCESS_CODE) {
+                document.getElementById('access-wall').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+            } else {
+                alert("Incorrect Access Code");
+                document.getElementById('access-input').value = "";
+            }
+        }
 
-        // Function that runs when a QR code is successfully read
-        async function onScanSuccess(decodedText, decodedResult) {
-            // Stop if we are already processing a code
-            if (isProcessing) return;
-            isProcessing = true;
+        // --- 2. Booth Selection Logic ---
+        function selectBooth(buttonElement, boothName) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.booth-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            buttonElement.classList.add('active');
+            selectedBooth = boothName;
+        }
 
-            // Pause the scanner to prevent multiple scans
-            html5QrcodeScanner.pause(true);
-
-            // Get the selected booth
-            const selectedBooth = document.getElementById('booth-select').value;
-
-            // Show processing state
-            feedbackEl.className = 'processing';
-            feedbackEl.innerText = '⏳ Verifying ' + decodedText + '...';
-
-            try {
-                // Send data to your automation tool
-                const response = await fetch(WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                uid: decodedText,
-                booth: selectedBooth
-                })
-            });
-
-                // Read the response from Make/Zapier
-                const result = await response.json();
-
-                // Check the logic returned from your automation
-                // Your automation must return JSON like {"status": "success"} or {"status": "error"}
-                if (result.status === 'success') {
-                    feedbackEl.className = 'success';
-                    feedbackEl.innerText = '✅ Valid! Deducted from ' + selectedBooth;
-                } else {
-                    feedbackEl.className = 'error';
-                    feedbackEl.innerText = '❌ STOP: ' + (result.message || 'Already voided or invalid code');
-                }
-            } catch (error) {
-                feedbackEl.className = 'error';
-                feedbackEl.innerText = '⚠️ Network Error. Check internet connection.';
+        // --- 3. Scanner Modal Logic (Using clean API to remove image upload) ---
+        function openScanner() {
+            if(!selectedBooth) {
+                alert("Please select a booth first!");
+                return;
             }
 
-            // Wait 3 seconds, then clear the screen and resume scanning
-            setTimeout(() => {
-                feedbackEl.className = '';
-                feedbackEl.style.display = 'none';
-                isProcessing = false;
-                html5QrcodeScanner.resume();
-            }, 3000);
+            document.getElementById('scanner-modal').style.display = 'flex';
+            
+            // Initialize the pure HTML5 QR Code instance (No ugly UI injected)
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            // Start camera (Environment faces outward on mobile)
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                alert("Camera error. Please ensure permissions are granted.");
+                closeScanner();
+            });
         }
 
-        function onScanFailure(error) {
-            // HTML5-QRcode throws errors constantly when it doesn't see a code. 
-            // We leave this empty so it doesn't spam the console.
+        function closeScanner() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(err => console.log(err));
+            }
+            document.getElementById('scanner-modal').style.display = 'none';
         }
 
-        // Start the scanner
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        // --- 4. Processing & Feedback Logic ---
+        async function onScanSuccess(decodedText) {
+            // Stop camera immediately to save battery and prevent double scans
+            closeScanner();
+            showFeedback('processing', '⏳', `Verifying\n${decodedText}...`, false);
+
+            try {
+                // Send data to Zapier / Google Apps Script
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ uid: decodedText, booth: selectedBooth })
+                });
+
+                const result = await response.json();
+
+                // Show Success or Error screen based on backend response
+                if (result.status === 'success') {
+                    showFeedback('success', '✅', `Success!\nDeducted from ${selectedBooth}`, true);
+                } else {
+                    showFeedback('error', '❌', `STOP:\n${result.message || 'Already voided or invalid code'}`, true);
+                }
+            } catch (error) {
+                showFeedback('error', '⚠️', 'Network Error.\nCheck internet connection.', true);
+            }
+        }
+
+        function showFeedback(type, icon, text, canDismiss) {
+            const overlay = document.getElementById('feedback-overlay');
+            const iconEl = document.getElementById('feedback-icon');
+            const textEl = document.getElementById('feedback-text');
+            const tapPrompt = document.getElementById('tap-to-close');
+
+            // Reset classes
+            overlay.className = '';
+            overlay.classList.add('bg-' + type);
+            
+            iconEl.innerText = icon;
+            textEl.innerText = text;
+            
+            // Only show the "Tap to close" instruction if processing is finished
+            tapPrompt.style.display = canDismiss ? 'block' : 'none';
+            // Disable clicking on the background while it is still "processing"
+            overlay.style.pointerEvents = canDismiss ? 'auto' : 'none';
+
+            overlay.style.display = 'flex';
+        }
+
+        function dismissFeedback() {
+            document.getElementById('feedback-overlay').style.display = 'none';
+        }
     </script>
 </body>
 </html>

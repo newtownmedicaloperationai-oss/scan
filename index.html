@@ -99,13 +99,12 @@
             try {
                 // Send data to your automation tool
                 const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        uid: decodedText,
-                        booth: selectedBooth
-                    })
-                });
+                method: 'POST',
+                body: JSON.stringify({
+                uid: decodedText,
+                booth: selectedBooth
+                })
+            });
 
                 // Read the response from Make/Zapier
                 const result = await response.json();

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Event Booth Scanner</title>
+    <title>活動攤位掃描器</title>
     <!-- Load the HTML5-QRCode Library via CDN -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -110,7 +110,7 @@
         <div class="booth-grid">
             <button class="booth-btn" onclick="selectBooth(this, '疫苗知多點')">疫苗知多點</button>
             <button class="booth-btn" onclick="selectBooth(this, '聽聽世界')">聽聽世界</button>
-            <button class="booth-btn" onclick="selectBooth(this, 'Booth C')">Booth C</button>
+            <button class="booth-btn" onclick="selectBooth(this, '攤位 C')">攤位 C</button>
         </div>
 
         <button id="open-scanner-btn" onclick="openScanner()">📸 掃描 QR Code</button>
@@ -121,14 +121,14 @@
         <div id="reader-container">
             <div id="reader"></div>
         </div>
-        <button id="close-modal-btn" onclick="closeScanner()">Cancel</button>
+        <button id="close-modal-btn" onclick="closeScanner()">取消</button>
     </div>
 
     <!-- 4. Tap-to-Dismiss Feedback -->
     <div id="feedback-overlay" onclick="dismissFeedback()">
         <div id="feedback-icon">⏳</div>
-        <div id="feedback-text">Verifying...</div>
-        <div class="tap-instruction" id="tap-to-close" style="display:none;">Tap anywhere to close</div>
+        <div id="feedback-text">驗證中...</div>
+        <div class="tap-instruction" id="tap-to-close" style="display:none;">輕觸螢幕關閉</div>
     </div>
 
     <script>
@@ -146,7 +146,7 @@
                 document.getElementById('access-wall').style.display = 'none';
                 document.getElementById('app-container').style.display = 'block';
             } else {
-                alert("Incorrect Access Code");
+                alert("密碼錯誤");
                 document.getElementById('access-input').value = "";
             }
         }
@@ -163,7 +163,7 @@
         // --- 3. Scanner Modal Logic (Using clean API to remove image upload) ---
         function openScanner() {
             if(!selectedBooth) {
-                alert("先選擇攤位!");
+                alert("請先選擇攤位！");
                 return;
             }
 
@@ -176,7 +176,7 @@
             // Start camera (Environment faces outward on mobile)
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .catch(err => {
-                alert("Camera error. Please ensure permissions are granted.");
+                alert("相機發生錯誤，請確保已開啟相機權限。");
                 closeScanner();
             });
         }
@@ -194,7 +194,7 @@
         async function onScanSuccess(decodedText) {
             // Stop camera immediately to save battery and prevent double scans
             closeScanner();
-            showFeedback('processing', '⏳', `Verifying\n${decodedText}...`, false);
+            showFeedback('processing', '⏳', `正在驗證\n${decodedText}...`, false);
 
             try {
                 // Send data to Zapier / Google Apps Script
@@ -207,12 +207,12 @@
 
                 // Show Success or Error screen based on backend response
                 if (result.status === 'success') {
-                    showFeedback('success', '✅', `Success!\nDeducted from ${selectedBooth}`, true);
+                    showFeedback('success', '✅', `成功！\n已於 ${selectedBooth} 扣除`, true);
                 } else {
-                    showFeedback('error', '❌', `STOP:\n${result.message || 'Already voided or invalid code'}`, true);
+                    showFeedback('error', '❌', `停止：\n${result.message || '已換領或無效的 QR Code'}`, true);
                 }
             } catch (error) {
-                showFeedback('error', '⚠️', 'Error.\n' + error.message, true);
+                showFeedback('error', '⚠️', '發生錯誤。\n' + error.message, true);
             }
         }
 

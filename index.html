@@ -96,15 +96,15 @@
 
     <!-- 1. Access Code Wall -->
     <div id="access-wall">
-        <h2>Enter Access Code</h2>
+        <h2>輸入密碼</h2>
         <!-- Default password is set to 8888 in the JS below -->
         <input type="password" id="access-input" inputmode="numeric" placeholder="••••">
-        <button id="access-btn" onclick="checkAccess()">Enter Scanner</button>
+        <button id="access-btn" onclick="checkAccess()"開始掃描</button>
     </div>
 
     <!-- Main Application -->
     <div id="app-container">
-        <h2>Select Your Booth</h2>
+        <h2>選擇攤位</h2>
         
         <!-- 2. Grid Buttons -->
         <div class="booth-grid">
@@ -113,7 +113,7 @@
             <button class="booth-btn" onclick="selectBooth(this, 'Booth C')">Booth C</button>
         </div>
 
-        <button id="open-scanner-btn" onclick="openScanner()">📸 Tap to Scan QR</button>
+        <button id="open-scanner-btn" onclick="openScanner()">📸 掃描 QR Code</button>
     </div>
 
     <!-- 3. Scanner Modal -->

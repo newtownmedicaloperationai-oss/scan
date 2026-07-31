@@ -11,6 +11,7 @@
             --primary: #2563eb;
             --success: #16a34a;
             --error: #dc2626;
+            --prize: #9333ea;
             --bg: #f4f4f9;
         }
         
@@ -23,7 +24,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- 1. Access Code Wall --- */
+        /* --- Access Code Wall --- */
         #access-wall {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 9999;
@@ -44,12 +45,17 @@
         /* --- Main App Container --- */
         #app-container { display: none; padding: 20px; max-width: 500px; margin: 0 auto; text-align: center; }
         
-        /* --- 2. Booth Grid --- */
+        /* --- Booth Grid (Updated for 5 booths) --- */
         .booth-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 40px 0;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0;
         }
+        /* Make the 5th button span both columns for a cleaner look */
+        .booth-btn:nth-child(5) {
+            grid-column: span 2;
+        }
+        
         .booth-btn {
-            padding: 20px 10px; font-size: 16px; font-weight: bold; background: white;
+            padding: 15px 10px; font-size: 16px; font-weight: bold; background: white;
             border: 2px solid #e5e7eb; border-radius: 12px; color: #4b5563; transition: all 0.2s;
         }
         .booth-btn.active {
@@ -57,14 +63,18 @@
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
         }
 
-        /* --- Main Scan Button --- */
-        #open-scanner-btn {
-            background: #111; color: white; border: none; padding: 20px; font-size: 20px;
+        /* --- Buttons --- */
+        .action-btn {
+            color: white; border: none; padding: 20px; font-size: 20px;
             border-radius: 12px; width: 100%; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
         }
+        #open-scanner-btn { background: #111; }
+        #prize-scanner-btn { background: var(--prize); margin-top: 10px; }
+        
+        .divider { margin: 30px 0; border: 0; border-top: 2px dashed #d1d5db; }
 
-        /* --- 3. Scanner Modal --- */
+        /* --- Scanner Modal --- */
         #scanner-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 1000;
@@ -77,46 +87,70 @@
             color: white; border: 2px solid white; border-radius: 8px;
         }
 
-        /* --- 4. Fullscreen Feedback Message --- */
+        /* --- Fullscreen Feedback Message --- */
         #feedback-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center; color: white; cursor: pointer;
         }
         #feedback-icon { font-size: 80px; margin-bottom: 20px; }
-        #feedback-text { font-size: 24px; font-weight: bold; line-height: 1.4; margin-bottom: 30px; }
+        #feedback-text { font-size: 24px; font-weight: bold; line-height: 1.4; margin-bottom: 30px; white-space: pre-line; }
         .tap-instruction { font-size: 16px; opacity: 0.8; background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 20px; }
 
         .bg-processing { background-color: #f59e0b; }
         .bg-success { background-color: var(--success); }
         .bg-error { background-color: var(--error); }
+        .bg-prize { background-color: var(--prize); }
+
+        /* --- Confirmation Modal --- */
+        #confirm-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 3000;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .confirm-box {
+            background: white; border-radius: 16px; padding: 30px; width: 100%; max-width: 400px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .confirm-box h3 { margin-top: 0; color: #111; font-size: 24px; }
+        .confirm-box p { color: #4b5563; font-size: 18px; margin-bottom: 30px; }
+        .confirm-btns { display: flex; gap: 15px; }
+        .confirm-btns button {
+            flex: 1; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; border: none;
+        }
+        .btn-cancel { background: #e5e7eb; color: #4b5563; }
+        .btn-confirm { background: var(--prize); color: white; }
     </style>
 </head>
 <body>
 
-    <!-- 1. Access Code Wall -->
+    <!-- Access Code Wall -->
     <div id="access-wall">
         <h2>輸入密碼</h2>
-        <!-- Default password is set to 8888 in the JS below -->
         <input type="password" id="access-input" inputmode="numeric" placeholder="••••">
-        <button id="access-btn" onclick="checkAccess()">開始掃描</button>
+        <button id="access-btn" onclick="checkAccess()">開始</button>
     </div>
 
     <!-- Main Application -->
     <div id="app-container">
-        <h2>選擇攤位</h2>
-        
-        <!-- 2. Grid Buttons -->
+        <h2>遊戲攤位掃描</h2>
+        <!-- 5 Booths Grid -->
         <div class="booth-grid">
-            <button class="booth-btn" onclick="selectBooth(this, '疫苗知多點')">疫苗知多點</button>
-            <button class="booth-btn" onclick="selectBooth(this, '聽聽世界')">聽聽世界</button>
-            <button class="booth-btn" onclick="selectBooth(this, '攤位 C')">攤位 C</button>
+            <button class="booth-btn" onclick="selectBooth(this, 'Rex 遊戲')">Rex 遊戲</button>
+            <button class="booth-btn" onclick="selectBooth(this, 'Tops 遊戲')">Tops 遊戲</button>
+            <button class="booth-btn" onclick="selectBooth(this, '兒科 遊戲')">兒科 遊戲</button>
+            <button class="booth-btn" onclick="selectBooth(this, '新都醫療 遊戲')">新都醫療</button>
+            <button class="booth-btn" onclick="selectBooth(this, '心理 遊戲')">心理 遊戲</button>
         </div>
+        <button id="open-scanner-btn" class="action-btn" onclick="openScanner('booth')">📸 掃描遊戲 QR Code</button>
 
-        <button id="open-scanner-btn" onclick="openScanner()">📸 掃描 QR Code</button>
+        <hr class="divider" />
+
+        <h2>禮物換領處</h2>
+        <button id="prize-scanner-btn" class="action-btn" onclick="openScanner('prize')">🎁 掃描換領禮物</button>
     </div>
 
-    <!-- 3. Scanner Modal -->
+    <!-- Scanner Modal -->
     <div id="scanner-modal">
         <div id="reader-container">
             <div id="reader"></div>
@@ -124,7 +158,19 @@
         <button id="close-modal-btn" onclick="closeScanner()">取消</button>
     </div>
 
-    <!-- 4. Tap-to-Dismiss Feedback -->
+    <!-- Confirmation Modal (For Prize) -->
+    <div id="confirm-overlay">
+        <div class="confirm-box">
+            <h3>確認換領？</h3>
+            <p>此參加者已完成所有遊戲，確認後將核銷禮物並紀錄。</p>
+            <div class="confirm-btns">
+                <button class="btn-cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="btn-confirm" onclick="executePrizeRedemption()">確認換領</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tap-to-Dismiss Feedback -->
     <div id="feedback-overlay" onclick="dismissFeedback()">
         <div id="feedback-icon">⏳</div>
         <div id="feedback-text">驗證中...</div>
@@ -134,12 +180,16 @@
     <script>
         // --- CONFIGURATION ---
         const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwUNEzurNkHtbb8wDckXcZ6RBYLfIcgd9OSv3hnAeEanvTl_06z3bMg7nQvKEHTwjhD_g/exec";
-        const ACCESS_CODE = "8888"; // Change your password here
+        const ACCESS_CODE = "8888"; 
         
         let selectedBooth = null;
         let html5QrCode = null;
+        
+        // 追蹤目前的掃描模式 ('booth' 或 'prize')
+        let currentScanMode = null; 
+        let pendingUid = null; 
 
-        // --- 1. Access Logic ---
+        // --- Access Logic ---
         function checkAccess() {
             const input = document.getElementById('access-input').value;
             if(input === ACCESS_CODE) {
@@ -151,29 +201,26 @@
             }
         }
 
-        // --- 2. Booth Selection Logic ---
+        // --- Booth Selection ---
         function selectBooth(buttonElement, boothName) {
-            // Remove active class from all buttons
             document.querySelectorAll('.booth-btn').forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
             buttonElement.classList.add('active');
             selectedBooth = boothName;
         }
 
-        // --- 3. Scanner Modal Logic (Using clean API to remove image upload) ---
-        function openScanner() {
-            if(!selectedBooth) {
+        // --- Scanner Logic ---
+        function openScanner(mode) {
+            currentScanMode = mode;
+
+            if(mode === 'booth' && !selectedBooth) {
                 alert("請先選擇攤位！");
                 return;
             }
 
             document.getElementById('scanner-modal').style.display = 'flex';
-            
-            // Initialize the pure HTML5 QR Code instance (No ugly UI injected)
             html5QrCode = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-            // Start camera (Environment faces outward on mobile)
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .catch(err => {
                 alert("相機發生錯誤，請確保已開啟相機權限。");
@@ -190,30 +237,92 @@
             document.getElementById('scanner-modal').style.display = 'none';
         }
 
-        // --- 4. Processing & Feedback Logic ---
+        // --- Processing Logic ---
         async function onScanSuccess(decodedText) {
-            // Stop camera immediately to save battery and prevent double scans
-            closeScanner();
-            showFeedback('processing', '⏳', `正在驗證\n${decodedText}...`, false);
+            closeScanner(); 
+            
+            if (currentScanMode === 'booth') {
+                processBoothScan(decodedText);
+            } else if (currentScanMode === 'prize') {
+                checkPrizeEligibility(decodedText);
+            }
+        }
 
+        // 1. 處理遊戲攤位掃描
+        async function processBoothScan(uid) {
+            showFeedback('processing', '⏳', `正在驗證\n${uid}...`, false);
             try {
-                // Send data to Zapier / Google Apps Script
                 const response = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ uid: decodedText, booth: selectedBooth })
+                    method: 'POST', redirect: 'follow',
+                    body: JSON.stringify({ action: 'play_game', uid: uid, booth: selectedBooth })
                 });
-
+                if (!response.ok) throw new Error("伺服器連線失敗");
+                
                 const result = await response.json();
-
-                // Show Success or Error screen based on backend response
                 if (result.status === 'success') {
-                    showFeedback('success', '✅', `成功！\n已於 ${selectedBooth} 扣除`, true);
+                    showFeedback('success', '✅', `成功！\n已於 ${selectedBooth} 紀錄`, true);
                 } else {
-                    showFeedback('error', '❌', `停止：\n${result.message || '已換領或無效的 QR Code'}`, true);
+                    showFeedback('error', '❌', `拒絕：\n${result.message}`, true);
                 }
             } catch (error) {
                 showFeedback('error', '⚠️', '發生錯誤。\n' + error.message, true);
             }
+        }
+
+        // 2. 檢查禮物換領資格
+        async function checkPrizeEligibility(uid) {
+            showFeedback('processing', '⏳', `檢查完成進度中...`, false);
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST', redirect: 'follow',
+                    body: JSON.stringify({ action: 'check_prize', uid: uid })
+                });
+                if (!response.ok) throw new Error("伺服器連線失敗");
+
+                const result = await response.json();
+                
+                if (result.status === 'ready') {
+                    dismissFeedback();
+                    pendingUid = uid;
+                    document.getElementById('confirm-overlay').style.display = 'flex';
+                } else if (result.status === 'incomplete') {
+                    const missing = result.missing_games.join('\n- ');
+                    showFeedback('error', '⚠️', `未完成所有遊戲！\n\n欠缺：\n- ${missing}`, true);
+                } else {
+                    showFeedback('error', '❌', result.message || '無法換領', true);
+                }
+            } catch (error) {
+                showFeedback('error', '⚠️', '發生錯誤。\n' + error.message, true);
+            }
+        }
+
+        // 3. 執行核銷與寫入 Prize Sheet
+        async function executePrizeRedemption() {
+            closeConfirmModal();
+            showFeedback('processing', '⏳', `正在核銷禮物紀錄...`, false);
+            
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST', redirect: 'follow',
+                    body: JSON.stringify({ action: 'redeem_prize', uid: pendingUid })
+                });
+                if (!response.ok) throw new Error("伺服器連線失敗");
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showFeedback('prize', '🎁', `換領成功！\n已寫入禮物紀錄。`, true);
+                } else {
+                    showFeedback('error', '❌', `換領失敗：\n${result.message}`, true);
+                }
+            } catch (error) {
+                showFeedback('error', '⚠️', '發生錯誤。\n' + error.message, true);
+            }
+        }
+
+        // --- UI Helpers ---
+        function closeConfirmModal() {
+            document.getElementById('confirm-overlay').style.display = 'none';
+            pendingUid = null;
         }
 
         function showFeedback(type, icon, text, canDismiss) {
@@ -222,18 +331,14 @@
             const textEl = document.getElementById('feedback-text');
             const tapPrompt = document.getElementById('tap-to-close');
 
-            // Reset classes
             overlay.className = '';
             overlay.classList.add('bg-' + type);
             
             iconEl.innerText = icon;
             textEl.innerText = text;
             
-            // Only show the "Tap to close" instruction if processing is finished
             tapPrompt.style.display = canDismiss ? 'block' : 'none';
-            // Disable clicking on the background while it is still "processing"
             overlay.style.pointerEvents = canDismiss ? 'auto' : 'none';
-
             overlay.style.display = 'flex';
         }
 

@@ -297,15 +297,21 @@
             }
         }
 
-        // 3. 執行核銷與寫入 Prize Sheet
+// 3. 執行核銷與寫入 Prize Sheet
         async function executePrizeRedemption() {
+            // ✅ 先把準備好的 UID 暫存到一個新變數
+            const currentUid = pendingUid; 
+            
+            // 現在關閉彈窗 (即使 pendingUid 變成 null 也不怕了)
             closeConfirmModal();
+            
             showFeedback('processing', '⏳', `正在核銷禮物紀錄...`, false);
             
             try {
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST', redirect: 'follow',
-                    body: JSON.stringify({ action: 'redeem_prize', uid: pendingUid })
+                    // ✅ 這裡改用剛剛暫存的 currentUid
+                    body: JSON.stringify({ action: 'redeem_prize', uid: currentUid }) 
                 });
                 if (!response.ok) throw new Error("伺服器連線失敗");
 
